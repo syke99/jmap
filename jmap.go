@@ -6,13 +6,12 @@ import (
 	"strings"
 )
 
-type Map[V any] struct {
-	m map[string]val[V]
-	comparer
+type Map struct {
+	m map[string]val
 }
 
-func NewMap[V any]() Map[V] {
-	return Map[V]{m: make(map[string]val[V]), comparer: comparer{}}
+func NewMap() *Map {
+	return &Map{m: make(map[string]val)}
 }
 
 type Option int8
@@ -24,22 +23,22 @@ const (
 	Null
 )
 
-type val[V any] struct {
-	v   *V
+type val struct {
+	v   any
 	opt Option
 }
 
-func (j Map[V]) Len() int {
+func (j *Map) Len() int {
 	return len(j.m)
 }
 
-func (j Map[V]) Get(key string) V {
-	return *j.m[key].v
+func (j *Map) Get(key string) any {
+	return j.m[key].v
 }
 
-func (j Map[V]) Set(key string, value V, opt ...Option) {
-	j.m[key] = val[V]{
-		v:   &value,
+func (j *Map) Set(key string, value any, opt ...Option) {
+	j.m[key] = val{
+		v:   value,
 		opt: def,
 	}
 
@@ -50,17 +49,11 @@ func (j Map[V]) Set(key string, value V, opt ...Option) {
 	}
 }
 
-func (j Map[V]) Delete(key string) {
+func (j *Map) Delete(key string) {
 	delete(j.m, key)
 }
 
-func (j Map[V]) Nil(key string) {
-	v := j.m[key]
-	v.v = nil
-	j.m[key] = v
-}
-
-func (j Map[V]) MarshalJSON() ([]byte, error) {
+func (j *Map) MarshalJSON() ([]byte, error) {
 	var str strings.Builder
 
 	str.WriteString("{")
@@ -75,7 +68,7 @@ func (j Map[V]) MarshalJSON() ([]byte, error) {
 			continue
 		case Null:
 			section = map[string]any{
-				k: v.v,
+				k: nil,
 			}
 		case OmitEmpty:
 			if v.v == nil {
@@ -84,7 +77,7 @@ func (j Map[V]) MarshalJSON() ([]byte, error) {
 			fallthrough
 		default:
 			section = map[string]any{
-				k: &v.v,
+				k: v.v,
 			}
 		}
 
@@ -92,6 +85,7 @@ func (j Map[V]) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		str.WriteString(fmt.Sprintf("%s,", string(jstr)[1:len(jstr)-1]))
 	}
 
@@ -102,7 +96,7 @@ func (j Map[V]) MarshalJSON() ([]byte, error) {
 	return []byte(res), nil
 }
 
-func (j Map[V]) UnmarshalJSON(data []byte) error {
+func (j *Map) UnmarshalJSON(data []byte) error {
 	bufMap := make(map[string]interface{})
 
 	err := json.Unmarshal(data, &bufMap)
@@ -111,35 +105,34 @@ func (j Map[V]) UnmarshalJSON(data []byte) error {
 	}
 
 	for k, v := range bufMap {
-		if j.comparer.compare(v) {
+		if isMap(v) {
 			var b []byte
+
 			b, err = json.Marshal(v)
 			if err != nil {
 				return err
 			}
 
-			x := NewMap[V]()
+			x := NewMap()
 
 			err = x.UnmarshalJSON(b)
 
-			y := any(x).(V)
+			y := any(x)
 
-			j.m[k] = val[V]{v: &y}
+			j.m[k] = val{v: y}
 
 			continue
 		}
 
-		x := v.(V)
+		x := v
 
-		j.m[k] = val[V]{v: &x}
+		j.m[k] = val{v: x}
 	}
 
 	return nil
 }
 
-type comparer struct{}
-
-func (c comparer) compare(v any) bool {
+func isMap(v any) bool {
 	var res bool
 
 	switch v.(type) {
@@ -152,33 +145,33 @@ func (c comparer) compare(v any) bool {
 	return res
 }
 
-var jsonstring = `{"greeting": "hello", "nested": {"destination": "Colorado", "season": "fall"}}`
+var jsonstring = `{"greeting":"hello","nested":{"destination":"Colorado","season":"fall"}}`
 
 func main() {
-	m := NewMap[any]()
+	m := NewMap()
 
-	m.Set("greeting", "hello")
-
-	m.Set("nested", map[string]any{
-		"location": "Colorado",
-		"season":   "fall",
-	})
-
-	str, err := json.Marshal(m)
-	if err != nil {
-		panic(err)
-	}
-
-	println(string(str))
-
-	//err := json.Unmarshal([]byte(jsonstring), &m)
+	//m.Set("greeting", "hello")
+	//
+	//m.Set("nested", map[string]any{
+	//	"location": "United States",
+	//	"season":   "fall",
+	//})
+	//
+	//str, err := json.Marshal(m)
 	//if err != nil {
 	//	panic(err)
 	//}
 	//
-	//v := m.Get("nested")
-	//
-	//x := v.(Map[any]).Get("destination")
-	//
-	//println(fmt.Sprintln(x))
+	//println(string(str))
+
+	err := json.Unmarshal([]byte(jsonstring), &m)
+	if err != nil {
+		panic(err)
+	}
+
+	v := m.Get("nested")
+
+	x := v.(*Map).Get("destination")
+
+	println(fmt.Sprintln(x))
 }
