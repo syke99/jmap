@@ -1,3 +1,3 @@
-module github.com/syke99/jmap
+module github.com/syke99/Map
 
-go 1.21.1
+go 1.21
