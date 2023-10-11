@@ -1,4 +1,4 @@
-package main
+package jmap
 
 import (
 	"encoding/json"
@@ -37,8 +37,18 @@ func (j *Map) Get(key string) any {
 }
 
 func (j *Map) Set(key string, value any, opt ...Option) {
+	var vl any
+
+	switch value.(type) {
+	case Map:
+		x := value.(Map)
+		vl = x.m
+	default:
+		vl = value
+	}
+
 	j.m[key] = val{
-		v:   value,
+		v:   vl,
 		opt: def,
 	}
 
@@ -97,7 +107,7 @@ func (j *Map) MarshalJSON() ([]byte, error) {
 }
 
 func (j *Map) UnmarshalJSON(data []byte) error {
-	bufMap := make(map[string]interface{})
+	bufMap := make(map[string]any)
 
 	err := json.Unmarshal(data, &bufMap)
 	if err != nil {
@@ -105,6 +115,25 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 	}
 
 	for k, v := range bufMap {
+		x := j.m[k]
+
+		switch x.opt {
+		case Omit:
+			if x.v != nil {
+				v = x.v
+			} else {
+				continue
+			}
+		case OmitEmpty:
+			// TODO: determine v type and skip if it's empty
+		case Null:
+			if x.v != nil {
+				v = x.v
+			} else {
+				v = nil
+			}
+		}
+
 		if isMap(v) {
 			var b []byte
 
@@ -124,9 +153,9 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 			continue
 		}
 
-		x := v
+		y := v
 
-		j.m[k] = val{v: x}
+		j.m[k] = val{v: y}
 	}
 
 	return nil
@@ -136,42 +165,11 @@ func isMap(v any) bool {
 	var res bool
 
 	switch v.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		res = true
 	default:
 		res = false
 	}
 
 	return res
-}
-
-var jsonstring = `{"greeting":"hello","nested":{"destination":"Colorado","season":"fall"}}`
-
-func main() {
-	m := NewMap()
-
-	//m.Set("greeting", "hello")
-	//
-	//m.Set("nested", map[string]any{
-	//	"location": "United States",
-	//	"season":   "fall",
-	//})
-	//
-	//str, err := json.Marshal(m)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//println(string(str))
-
-	err := json.Unmarshal([]byte(jsonstring), &m)
-	if err != nil {
-		panic(err)
-	}
-
-	v := m.Get("nested")
-
-	x := v.(*Map).Get("destination")
-
-	println(fmt.Sprintln(x))
 }
