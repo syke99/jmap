@@ -34,7 +34,6 @@ const (
 	Omit
 	OmitEmpty
 	Null
-	NoRecurse
 )
 
 type val struct {
@@ -167,7 +166,13 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 		}
 
 		if isMap(v) {
-			if opt == NoRecurse || j.recurser == nil {
+			switch v.(type) {
+			case Map:
+				if v.(Map).recurser == nil {
+					continue
+				}
+			}
+			if j.recurser == nil {
 				continue
 			}
 
@@ -178,7 +183,17 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 				return err
 			}
 
-			m := NewMap(WithRecurser)
+			var m *Map
+			switch v.(type) {
+			case Map:
+				var o RecurserOpt
+				if v.(Map).recurser != nil {
+					o = WithRecurser
+				}
+				m = NewMap(o)
+			default:
+				m = NewMap(WithRecurser)
+			}
 
 			err = m.UnmarshalJSON(b)
 
