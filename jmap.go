@@ -7,11 +7,22 @@ import (
 )
 
 type Map struct {
-	m map[string]val
+	m        map[string]val
+	recurser Recurser
 }
 
-func NewMap() *Map {
-	return &Map{m: make(map[string]val)}
+type Recurser interface {
+	recurse()
+}
+
+type recurser struct{}
+
+func WithRecurser() Recurser { return recurser{} }
+
+func (r recurser) recurse() {}
+
+func NewMap(rec Recurser) *Map {
+	return &Map{m: make(map[string]val), recurser: rec}
 }
 
 type Option int8
@@ -150,7 +161,7 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 		}
 
 		if isMap(v) {
-			if opt == NoRecurse {
+			if opt == NoRecurse || j.recurser == nil {
 				continue
 			}
 
@@ -161,11 +172,11 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 				return err
 			}
 
-			x := NewMap()
+			m := NewMap(j.recurser)
 
-			err = x.UnmarshalJSON(b)
+			err = m.UnmarshalJSON(b)
 
-			y := any(x)
+			y := any(m)
 
 			j.m[k] = val{v: y}
 
