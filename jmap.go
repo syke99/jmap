@@ -22,7 +22,13 @@ func WithRecurser() Recurser { return recurser{} }
 func (r recurser) recurse() {}
 
 func NewMap(rec Recurser) *Map {
-	return &Map{m: make(map[string]val), recurser: rec}
+	m := &Map{m: make(map[string]val)}
+
+	if rec != nil {
+		m.recurser = rec
+	}
+	
+	return m
 }
 
 type Option int8
