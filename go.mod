@@ -1,6 +1,6 @@
 module github.com/syke99/JMap
 
-go 1.21
+go 1.19
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

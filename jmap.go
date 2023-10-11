@@ -80,6 +80,8 @@ func (j *Map) Map() map[string]any {
 	m := make(map[string]any)
 
 	for k, v := range j.m {
+		v := v
+
 		if k == "" {
 			continue
 		}
