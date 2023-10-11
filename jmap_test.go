@@ -44,12 +44,20 @@ func TestIsMap_NotMap(t *testing.T) {
 	assert.False(t, res)
 }
 
+func TestWithRecurser(t *testing.T) {
+	// Act
+	r := WithRecurser()
+
+	// Assert
+	assert.NotNil(t, r)
+}
+
 func TestNewMap(t *testing.T) {
 	// Arrange
-	expected := &Map{m: make(map[string]val)}
+	expected := &Map{m: make(map[string]val), recurser: WithRecurser()}
 
 	// Act
-	actual := NewMap(WithRecurser())
+	actual := NewMap(WithRecurser)
 
 	// Assert
 	assert.NotNil(t, actual)
@@ -58,7 +66,7 @@ func TestNewMap(t *testing.T) {
 
 func TestSet(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	// Assert
 	assert.Equal(t, 0, len(m.m))
@@ -72,7 +80,7 @@ func TestSet(t *testing.T) {
 
 func TestLen(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	// Act
 	l := m.Len()
@@ -92,7 +100,7 @@ func TestLen(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, hello)
 
@@ -105,7 +113,7 @@ func TestGet(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	l := m.Len()
 
@@ -134,11 +142,11 @@ func TestDelete(t *testing.T) {
 
 func TestMapMap(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, hello)
 
-	n := NewMap(WithRecurser())
+	n := NewMap(WithRecurser)
 
 	n.Set(location, loc)
 
@@ -161,11 +169,11 @@ func TestMapMap(t *testing.T) {
 
 func TestJSONMarshal(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, hello)
 
-	n := NewMap(WithRecurser())
+	n := NewMap(WithRecurser)
 
 	n.Set(location, loc)
 
@@ -183,11 +191,11 @@ func TestJSONMarshal(t *testing.T) {
 
 func TestJSONMarshalOmit(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, hello)
 
-	n := NewMap(WithRecurser())
+	n := NewMap(WithRecurser)
 
 	n.Set(location, loc)
 
@@ -205,7 +213,7 @@ func TestJSONMarshalOmit(t *testing.T) {
 
 func TestJSONMarshalNull(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, hello, Null)
 
@@ -219,7 +227,7 @@ func TestJSONMarshalNull(t *testing.T) {
 
 func TestJSONUnmarshal(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, howdy)
 
@@ -239,7 +247,7 @@ func TestJSONUnmarshal(t *testing.T) {
 
 func TestJSONUnmarshalNoPresetFields(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	// Act
 	err := json.Unmarshal([]byte(jsonString), m)
@@ -254,11 +262,11 @@ func TestJSONUnmarshalNoPresetFields(t *testing.T) {
 
 func TestJSONUnmarshalOmit(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, howdy)
 
-	m.Set(nested, NewMap(WithRecurser()), Omit)
+	m.Set(nested, NewMap(WithRecurser), Omit)
 
 	// Assert
 	assert.Equal(t, howdy, m.Get(greeting))
@@ -274,11 +282,11 @@ func TestJSONUnmarshalOmit(t *testing.T) {
 
 func TestJSONUnmarshalNull(t *testing.T) {
 	// Arrange
-	m := NewMap(WithRecurser())
+	m := NewMap(WithRecurser)
 
 	m.Set(greeting, howdy)
 
-	n := NewMap(WithRecurser())
+	n := NewMap(WithRecurser)
 
 	m.Set(nested, n, Null)
 

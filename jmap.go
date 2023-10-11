@@ -8,26 +8,22 @@ import (
 
 type Map struct {
 	m        map[string]val
-	recurser Recurser
+	recurser *Recurser
 }
 
-type Recurser interface {
-	recurse()
-}
+type Recurser struct{}
 
-type recurser struct{}
+func WithRecurser() *Recurser { return &Recurser{} }
 
-func WithRecurser() Recurser { return recurser{} }
+type RecurserOpt = func() *Recurser
 
-func (r recurser) recurse() {}
-
-func NewMap(rec Recurser) *Map {
+func NewMap(rec RecurserOpt) *Map {
 	m := &Map{m: make(map[string]val)}
 
 	if rec != nil {
-		m.recurser = rec
+		m.recurser = rec()
 	}
-	
+
 	return m
 }
 
@@ -178,7 +174,7 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 				return err
 			}
 
-			m := NewMap(j.recurser)
+			m := NewMap(WithRecurser)
 
 			err = m.UnmarshalJSON(b)
 
