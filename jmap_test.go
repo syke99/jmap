@@ -237,6 +237,21 @@ func TestJSONUnmarshal(t *testing.T) {
 	assert.Equal(t, fall, m.Get(nested).(*Map).Get(season))
 }
 
+func TestJSONUnmarshalNoPresetFields(t *testing.T) {
+	// Arrange
+	m := NewMap()
+
+	// Act
+	err := json.Unmarshal([]byte(jsonString), m)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Equal(t, hello, m.Get(greeting))
+	assert.IsType(t, m, m.Get(nested))
+	assert.Equal(t, loc, m.Get(nested).(*Map).Get(location))
+	assert.Equal(t, fall, m.Get(nested).(*Map).Get(season))
+}
+
 func TestJSONUnmarshalOmit(t *testing.T) {
 	// Arrange
 	m := NewMap()

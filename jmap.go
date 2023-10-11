@@ -21,6 +21,7 @@ const (
 	Omit
 	OmitEmpty
 	Null
+	NoRecurse
 )
 
 type val struct {
@@ -129,7 +130,9 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 	for k, v := range bufMap {
 		x := j.m[k]
 
-		switch x.opt {
+		opt := x.opt
+
+		switch opt {
 		case Omit:
 			if x.v != nil {
 				v = x.v
@@ -147,6 +150,10 @@ func (j *Map) UnmarshalJSON(data []byte) error {
 		}
 
 		if isMap(v) {
+			if opt == NoRecurse {
+				continue
+			}
+
 			var b []byte
 
 			b, err = json.Marshal(v)
