@@ -63,6 +63,18 @@ func (j *Map) Delete(key string) {
 	delete(j.m, key)
 }
 
+func (j *Map) Map() map[string]any {
+	m := make(map[string]any)
+
+	for k, v := range j.m {
+		vl := v.v
+
+		m[k] = vl
+	}
+
+	return m
+}
+
 func (j *Map) MarshalJSON() ([]byte, error) {
 	var str strings.Builder
 

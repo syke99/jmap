@@ -7,7 +7,20 @@ import (
 	"testing"
 )
 
-var loc = "us"
+const (
+	location = "location"
+	loc      = "us"
+	greeting = "greeting"
+	hello    = "hello"
+	howdy    = "howdy"
+	nested   = "nested"
+	season   = "season"
+	fall     = "fall"
+)
+
+var jsonString = fmt.Sprintf("{\"greeting\":\"hello\",\"nested\":{\"location\":\"%s\",\"season\":\"fall\"}}", loc)
+var jsonStringJustGreeting = "{\"greeting\":\"hello\"}"
+var jsonStringJustHello = "{\"greeting\":null}"
 
 func TestIsMap(t *testing.T) {
 	// Arrange
@@ -22,7 +35,7 @@ func TestIsMap(t *testing.T) {
 
 func TestIsMap_NotMap(t *testing.T) {
 	// Arrange
-	s := "hello"
+	s := hello
 
 	// Act
 	res := isMap(s)
@@ -51,7 +64,7 @@ func TestSet(t *testing.T) {
 	assert.Equal(t, 0, len(m.m))
 
 	// Act
-	m.Set("greeting", "hello")
+	m.Set(greeting, hello)
 
 	// Assert
 	assert.Equal(t, 1, len(m.m))
@@ -68,7 +81,7 @@ func TestLen(t *testing.T) {
 	assert.Equal(t, 0, l)
 
 	// Arrange
-	m.Set("greeting", "hello")
+	m.Set(greeting, hello)
 
 	// Act
 	l = m.Len()
@@ -79,17 +92,15 @@ func TestLen(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	// Arrange
-	greeting := "hello"
-
 	m := NewMap()
 
-	m.Set("greeting", greeting)
+	m.Set(greeting, hello)
 
 	// Act
-	hello := m.Get("greeting")
+	h := m.Get(greeting)
 
 	// Assert
-	assert.Equal(t, greeting, hello)
+	assert.Equal(t, hello, h)
 }
 
 func TestDelete(t *testing.T) {
@@ -102,9 +113,9 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, 0, l)
 
 	// Arrange
-	m.Set("greeting", "hello")
+	m.Set(greeting, hello)
 
-	m.Set("location", loc)
+	m.Set(location, loc)
 
 	l = m.Len()
 
@@ -112,7 +123,7 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, 2, l)
 
 	// Act
-	m.Delete("greeting")
+	m.Delete(greeting)
 
 	// Arrange
 	l = m.Len()
@@ -121,125 +132,149 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, 1, l)
 }
 
-var greeting = "hello"
-var jsonstring = fmt.Sprintf("{\"greeting\":\"hello\",\"nested\":{\"location\":\"%s\",\"season\":\"fall\"}}", loc)
+func TestMapMap(t *testing.T) {
+	// Arrange
+	m := NewMap()
+
+	m.Set(greeting, hello)
+
+	n := NewMap()
+
+	n.Set(location, loc)
+
+	n.Set(season, fall)
+
+	m.Set(nested, n)
+
+	// Act
+	mmap := m.Map()
+
+	// Assert
+	assert.NotNil(t, mmap)
+	assert.True(t, isMap(mmap))
+	assert.Equal(t, 2, len(mmap))
+	assert.Equal(t, hello, mmap[greeting].(string))
+	assert.Equal(t, 2, len(mmap[nested].(*Map).Map()))
+	assert.Equal(t, loc, mmap[nested].(*Map).Map()[location])
+	assert.Equal(t, fall, mmap[nested].(*Map).Map()[season])
+}
 
 func TestJSONMarshal(t *testing.T) {
 	// Arrange
 	m := NewMap()
 
-	m.Set("greeting", greeting)
+	m.Set(greeting, hello)
 
 	n := NewMap()
 
-	n.Set("location", loc)
+	n.Set(location, loc)
 
-	n.Set("season", "fall")
+	n.Set(season, fall)
 
-	m.Set("nested", n)
+	m.Set(nested, n)
 
 	// Act
 	str, err := json.Marshal(m)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, jsonstring, string(str))
+	assert.Equal(t, jsonString, string(str))
 }
 
 func TestJSONMarshalOmit(t *testing.T) {
 	// Arrange
 	m := NewMap()
 
-	m.Set("greeting", greeting)
+	m.Set(greeting, hello)
 
 	n := NewMap()
 
-	n.Set("location", loc)
+	n.Set(location, loc)
 
-	n.Set("season", "fall")
+	n.Set(season, fall)
 
-	m.Set("nested", n, Omit)
+	m.Set(nested, n, Omit)
 
 	// Act
 	str, err := json.Marshal(m)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "{\"greeting\":\"hello\"}", string(str))
+	assert.Equal(t, jsonStringJustGreeting, string(str))
 }
 
 func TestJSONMarshalNull(t *testing.T) {
 	// Arrange
 	m := NewMap()
 
-	m.Set("greeting", greeting, Null)
+	m.Set(greeting, hello, Null)
 
 	// Act
 	str, err := json.Marshal(m)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "{\"greeting\":null}", string(str))
+	assert.Equal(t, jsonStringJustHello, string(str))
 }
 
 func TestJSONUnmarshal(t *testing.T) {
 	// Arrange
 	m := NewMap()
 
-	m.Set("greeting", "howdy")
+	m.Set(greeting, howdy)
 
 	// Assert
-	assert.Equal(t, "howdy", m.Get("greeting"))
+	assert.Equal(t, howdy, m.Get(greeting))
 
 	// Act
-	err := json.Unmarshal([]byte(jsonstring), m)
+	err := json.Unmarshal([]byte(jsonString), m)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, greeting, m.Get("greeting"))
-	assert.IsType(t, m, m.Get("nested"))
-	assert.Equal(t, loc, m.Get("nested").(*Map).Get("location"))
-	assert.Equal(t, "fall", m.Get("nested").(*Map).Get("season"))
+	assert.Equal(t, hello, m.Get(greeting))
+	assert.IsType(t, m, m.Get(nested))
+	assert.Equal(t, loc, m.Get(nested).(*Map).Get(location))
+	assert.Equal(t, fall, m.Get(nested).(*Map).Get(season))
 }
 
 func TestJSONUnmarshalOmit(t *testing.T) {
 	// Arrange
 	m := NewMap()
 
-	m.Set("greeting", "howdy")
+	m.Set(greeting, howdy)
 
-	m.Set("nested", NewMap(), Omit)
+	m.Set(nested, NewMap(), Omit)
 
 	// Assert
-	assert.Equal(t, "howdy", m.Get("greeting"))
+	assert.Equal(t, howdy, m.Get(greeting))
 
 	// Act
-	err := json.Unmarshal([]byte(jsonstring), m)
+	err := json.Unmarshal([]byte(jsonString), m)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, greeting, m.Get("greeting"))
-	assert.Equal(t, 0, m.Get("nested").(*Map).Len())
+	assert.Equal(t, hello, m.Get(greeting))
+	assert.Equal(t, 0, m.Get(nested).(*Map).Len())
 }
 
 func TestJSONUnmarshalNull(t *testing.T) {
 	// Arrange
 	m := NewMap()
 
-	m.Set("greeting", "howdy")
+	m.Set(greeting, howdy)
 
 	n := NewMap()
 
-	m.Set("nested", n, Null)
+	m.Set(nested, n, Null)
 
 	// Assert
-	assert.Equal(t, "howdy", m.Get("greeting"))
+	assert.Equal(t, howdy, m.Get(greeting))
 
 	// Act
-	err := json.Unmarshal([]byte(jsonstring), m)
+	err := json.Unmarshal([]byte(jsonString), m)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, greeting, m.Get("greeting"))
-	assert.Equal(t, n, m.Get("nested"))
+	assert.Equal(t, hello, m.Get(greeting))
+	assert.Equal(t, n, m.Get(nested))
 }
